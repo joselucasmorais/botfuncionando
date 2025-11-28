@@ -52,7 +52,7 @@ if authentication_status:
     pass
     
 # 3. SE A AUTENTICAÇÃO FALHAR OU NÃO TENTOU
-def buscar_saldo():
+def buscar_saldo():      # <--- CORRETO!
     """Busca o saldo atual da conta Asaas da cliente"""
     url = "https://www.asaas.com/api/v3/finance/balance"
     headers = {"access_token": ASAAS_KEY}
