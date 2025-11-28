@@ -129,7 +129,7 @@ if authentication_status:
     elif aba == "Financeiro":
         st.title("💸 Gestão Financeira Self-Service")
 
-       def buscar_saldo():
+      def buscar_saldo():      # <-- CORRETO!
     """Busca o saldo atual da conta Asaas da cliente"""
     url = "https://www.asaas.com/api/v3/finance/balance"
     headers = {"access_token": ASAAS_KEY}
