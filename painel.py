@@ -52,11 +52,24 @@ if authentication_status:
     pass
     
 # 3. SE A AUTENTICAÇÃO FALHAR OU NÃO TENTOU
-elif authentication_status == False:
-    st.error('Nome de utilizador/palavra-passe incorretos')
-elif authentication_status == None:
-    st.warning('Por favor, insira o seu nome de utilizador e palavra-passe para aceder ao Painel.')
-return 0.00
+def buscar_saldo():
+    """Busca o saldo atual da conta Asaas da cliente"""
+    url = "https://www.asaas.com/api/v3/finance/balance"
+    headers = {"access_token": ASAAS_KEY}
+    try:
+        response = requests.get(url, headers=headers)
+        if response.status_code == 200:
+            return response.json().get('balance', 0.00)
+        st.error(f"Erro {response.status_code} ao buscar saldo.")
+        return 0.00 # Linha de retorno do try/if
+    except requests.exceptions.RequestException as e:
+        # Erro de conexão
+        st.error(f"Erro de conexão com Asaas: {e}")
+        return 0.00
+    except Exception as e:
+        # Erro geral de JSON/parsing
+        st.error(f"Erro de dados no saldo: {e}")
+        return 0.00
 
 # ======================================================
 # 1. AUTENTICAÇÃO E INÍCIO DO FLUXO
