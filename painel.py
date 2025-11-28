@@ -58,7 +58,7 @@ def buscar_saldo():      # <--- CORRETO!
     headers = {"access_token": ASAAS_KEY}
     try:
         response = requests.get(url, headers=headers)
-        if response.status_code == 200:
+if response.status_code == 200:
             return response.json().get('balance', 0.00)
         st.error(f"Erro {response.status_code} ao buscar saldo.")
         return 0.00 # Linha de retorno do try/if
@@ -93,14 +93,14 @@ if authentication_status:
     st.sidebar.divider()
     
     # --- ABA 1: DASHBOARD ---
-    if aba == "Dashboard":
+if aba == "Dashboard":
         st.title("🚀 Dashboard de Vendas")
         
         # Busca dados, agora filtrados (MVP: A busca não está filtrando por creator_id ainda, mas o sistema está pronto)
         df_usuarios_data = fetch_filtered_data("usuarios", creator_id)
         
         # O restante do código do dashboard (cálculos, gráficos e tabelas)
-        if df_usuarios_data:
+if df_usuarios_data:
             df = pd.DataFrame(df_usuarios_data)
             
             vips = len(df[df['status'] == 'cliente_vip'])
@@ -134,7 +134,7 @@ def buscar_saldo():      # <-- CORRETO!
     headers = {"access_token": ASAAS_KEY}
     try:
         response = requests.get(url, headers=headers)
-        if response.status_code == 200:
+if response.status_code == 200:
             return response.json().get('balance', 0.00)
         st.error(f"Erro {response.status_code} ao buscar saldo.")
         return 0.00
@@ -166,7 +166,7 @@ def buscar_saldo():      # <-- CORRETO!
             
             submitted_cadastro = st.form_submit_button("Salvar/Atualizar Conta de Saque")
             
-            if submitted_cadastro:
+if submitted_cadastro:
                 dados_banco = {
                     "user_telegram_id": CLIENT_ID_NUMERICO,
                     "banco_nome": banco_nome,
