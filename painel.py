@@ -115,23 +115,28 @@ if authentication_status:
     # --- ABA 3: FINANCEIRO (SAQUE SELF-SERVICE) ---
     elif aba == "Financeiro":
         st.title("💸 Gestão Financeira Self-Service")
-
         def buscar_saldo():
     """Busca o saldo atual da conta Asaas da cliente"""
     url = "https://www.asaas.com/api/v3/finance/balance"
     headers = {"access_token": ASAAS_KEY}
+    
+    # 1. TRY
     try:
         response = requests.get(url, headers=headers)
+        
+        # 4 espaços à frente
         if response.status_code == 200:
             return response.json().get('balance', 0.00)
+        
+        # O retorno é alinhado com o IF
         st.error(f"Erro {response.status_code} ao buscar saldo.")
         return 0.00
+        
+    # 2. EXCEPTs (ALINHADOS PERFEITAMENTE COM O TRY)
     except requests.exceptions.RequestException as e:
-        # Erro de conexão
         st.error(f"Erro de conexão com Asaas: {e}")
         return 0.00
     except Exception as e:
-        # Erro geral de JSON/parsing
         st.error(f"Erro de dados no saldo: {e}")
         return 0.00
 
@@ -174,3 +179,4 @@ elif authentication_status == False:
     st.error('Nome de utilizador/palavra-passe incorretos')
 elif authentication_status == None:
     st.warning('Por favor, insira o seu nome de utilizador e palavra-passe para aceder ao Painel.')
+
