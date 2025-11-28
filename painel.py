@@ -56,7 +56,20 @@ def buscar_saldo():
 # ======================================================
 # 1. AUTENTICAÇÃO E INÍCIO DO FLUXO
 # ======================================================
+# --- FUNÇÕES DE LÓGICA DE NEGÓCIO ---
 
+@st.cache_data(ttl=60)
+def get_all_creators():
+    """Busca utilizadores (criadores) do banco para autenticação"""
+    try:
+        data = supabase.table("creators").select("id, username, name, password_hash").execute().data
+        usernames = [d['username'] for d in data]
+        names = [d['name'] for d in data]
+        hashed_passwords = [d['password_hash'] for d in data]
+        return usernames, names, hashed_passwords, data
+    except Exception as e:
+        st.error(f"Erro ao buscar criadores: {e}")
+        return [], [], [], []
 usernames, names, hashed_passwords, creators_data = get_all_creators()
 # O hash usado deve ser bcrypt
 authenticator = stauth.Authenticate(names, usernames, hashed_passwords, 'autenticador', 'abcdef', cookie_expiry_days=30)
@@ -143,3 +156,4 @@ elif authentication_status == False:
     st.error('Nome de utilizador/palavra-passe incorretos')
 elif authentication_status is None:
     st.warning('Por favor, insira o seu nome de utilizador e palavra-passe para aceder ao Painel.')
+
