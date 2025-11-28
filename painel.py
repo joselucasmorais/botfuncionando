@@ -52,18 +52,26 @@ if authentication_status:
     pass
     
 # 3. SE A AUTENTICAÇÃO FALHAR OU NÃO TENTOU
-def buscar_saldo():      # <--- CORRETO!
+def buscar_saldo():
     """Busca o saldo atual da conta Asaas da cliente"""
     url = "https://www.asaas.com/api/v3/finance/balance"
     headers = {"access_token": ASAAS_KEY}
+    
+    # O BLOCO TRY COMEÇA AQUI
     try:
         response = requests.get(url, headers=headers)
+        
+        # O BLOCO IF ESTÁ DENTRO DO TRY
 if response.status_code == 200:
             return response.json().get('balance', 0.00)
+        
+        # Se a requisição falhar (400, 500, etc.)
         st.error(f"Erro {response.status_code} ao buscar saldo.")
-        return 0.00 # Linha de retorno do try/if
+        return 0.00
+        
+    # OS BLOCOS EXCEPT TERMINAM O TRY
     except requests.exceptions.RequestException as e:
-        # Erro de conexão
+        # Erro de conexão (sem internet, chave errada)
         st.error(f"Erro de conexão com Asaas: {e}")
         return 0.00
     except Exception as e:
