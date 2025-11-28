@@ -56,7 +56,7 @@ elif authentication_status == False:
     st.error('Nome de utilizador/palavra-passe incorretos')
 elif authentication_status == None:
     st.warning('Por favor, insira o seu nome de utilizador e palavra-passe para aceder ao Painel.')
-        return 0.00
+return 0.00
 
 # ======================================================
 # 1. AUTENTICAÇÃO E INÍCIO DO FLUXO
