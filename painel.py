@@ -57,28 +57,24 @@ def buscar_saldo():
     url = "https://www.asaas.com/api/v3/finance/balance"
     headers = {"access_token": ASAAS_KEY}
     
-    # O BLOCO TRY COMEÇA AQUI
+    # 1. TRY
     try:
         response = requests.get(url, headers=headers)
         
-        # O BLOCO IF ESTÁ DENTRO DO TRY
-if response.status_code == 200:
+        # O IF ESTÁ INDENTADO EM RELAÇÃO AO TRY
+    if response.status_code == 200:
             return response.json().get('balance', 0.00)
         
-        # Se a requisição falhar (400, 500, etc.)
         st.error(f"Erro {response.status_code} ao buscar saldo.")
         return 0.00
         
-    # OS BLOCOS EXCEPT TERMINAM O TRY
+    # 2. EXCEPT (TEM QUE ESTAR ALINHADO COM O TRY)
     except requests.exceptions.RequestException as e:
-        # Erro de conexão (sem internet, chave errada)
         st.error(f"Erro de conexão com Asaas: {e}")
         return 0.00
     except Exception as e:
-        # Erro geral de JSON/parsing
         st.error(f"Erro de dados no saldo: {e}")
         return 0.00
-
 # ======================================================
 # 1. AUTENTICAÇÃO E INÍCIO DO FLUXO
 # ======================================================
