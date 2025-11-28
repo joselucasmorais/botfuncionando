@@ -9,7 +9,7 @@ from supabase import create_client
 # ======================================================
 SUPABASE_URL = "https://fygapkucfwgdynbiyfcz.supabase.co/"
 SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ5Z2Fwa3VjZndnZHluYml5ZmN6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQzMDUyNDcsImV4cCI6MjA3OTg4MTI0N30.ZTxjl8OYB-9nZtBEhTq[...]" # Truncado por segurança
-ASAAS_KEY = "$aact_prod_000MzkwODA2MWY2OGM3MWRlMDU2NWM3MzJlNzZmNGZhZGY6OjQ5NDI5MGU3LTU1NzktNGI3NS04MThkLWMzMjA0YTIxOGZmYzo6JGFhY2hfMWEyMjU1MmYtNjZkZS00NGM3LTkzNWUtYTMzMjAzZWM0NTI5"
+ASAAS_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ5Z2Fwa3VjZndnZHluYml5ZmN6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQzMDUyNDcsImV4cCI6MjA3OTg4MTI0N30.ZTxjl8OYB-9nZtBEhTq8iNIIOFNUyJHBH58VK_XPS1E"
 CPF_CLIENTE = "141.214.394.22"
 # --- VARIÁVEL DE TESTE 
 CLIENT_TEST_ID = 6519700996
@@ -156,4 +156,5 @@ elif authentication_status == False:
     st.error('Nome de utilizador/palavra-passe incorretos')
 elif authentication_status is None:
     st.warning('Por favor, insira o seu nome de utilizador e palavra-passe para aceder ao Painel.')
+
 
