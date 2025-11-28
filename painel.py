@@ -120,13 +120,13 @@ if authentication_status:
 
 
     # --- ABA 2: PRODUTOS (SIMPLIFICADO) ---
-    elif aba == "Produtos":
+elif aba == "Produtos":
         st.title("📦 Gestão de Produtos")
         st.warning("Aqui você adicionaria o formulário para a cliente gerir os produtos na tabela 'produtos'.")
 
 
     # --- ABA 3: FINANCEIRO (SAQUE SELF-SERVICE) ---
-    elif aba == "Financeiro":
+elif aba == "Financeiro":
         st.title("💸 Gestão Financeira Self-Service")
 def buscar_saldo():      # <-- CORRETO!
     """Busca o saldo atual da conta Asaas da cliente"""
