@@ -23,7 +23,7 @@ ASAAS_KEY = st.secrets["ASAAS_KEY"] "$aact_prod_000MzkwODA2MWY2OGM3MWRlMDU2NWM3M
 CPF_CLIENTE = st.secrets["CPF_CLIENTE"] "141.214.394.22"
 CLIENT_TEST_ID = st.secrets["CLIENT_TEST_ID"] "1470609053"
                                             ^
-SyntaxError: invalid syntax" 
+"SyntaxError: invalid syntax" 
 # ======================================================
 
 # ... (O resto do código deve estar igual) ...
@@ -222,6 +222,7 @@ elif authentication_status == False:
     st.error('Nome de utilizador/palavra-passe incorretos')
 elif authentication_status is None:
     st.warning('Por favor, insira o seu nome de utilizador e palavra-passe para aceder ao Painel.')
+
 
 
 
