@@ -5,29 +5,20 @@ import streamlit_authenticator as stauth
 from supabase import create_client
 
 # ======================================================
-# 1. CONFIGURAÇÃO DA PÁGINA (OBRIGATÓRIO SER A PRIMEIRA LINHA STREAMLIT)
+# 1. CONFIGURAÇÃO DA PÁGINA (OBRIGATÓRIO SER A PRIMEIRA LINHA DO STREAMLIT)
 # ======================================================
 st.set_page_config(page_title="Painel Admin", page_icon="🚀", layout="wide")
 
 # ======================================================
-# 2. RECUPERAÇÃO DE SEGREDOS (DO STREAMLIT CLOUD)
-# ======================================================
-try:
-    # ======================================================
 # 2. RECUPERAÇÃO DE SEGREDOS (CÓDIGO LIMPO)
 # ======================================================
-# ATENÇÃO: Não coloque "=" nem o valor real aqui!
-# Apenas o nome da chave entre colchetes e aspas.
-
+# O código abaixo busca os valores guardados no cofre do Streamlit.
 try:
     SUPABASE_URL = st.secrets["SUPABASE_URL"]
     SUPABASE_KEY = st.secrets["SUPABASE_KEY"]
     ASAAS_KEY = st.secrets["ASAAS_KEY"]
     CPF_CLIENTE = st.secrets["CPF_CLIENTE"]
     CLIENT_TEST_ID = st.secrets["CLIENT_TEST_ID"]
-except Exception as e:
-    st.error(f"Erro: Faltam chaves nos Secrets do site. Detalhe: {e}")
-    st.stop()
 except Exception as e:
     st.error(f"Erro Crítico: Faltam chaves nos 'Secrets' do Streamlit Cloud. Detalhe: {e}")
     st.stop()
@@ -45,7 +36,7 @@ def init_connection():
 supabase = init_connection()
 
 if not supabase:
-    st.error("Falha ao conectar com o Supabase. Verifique a URL e a KEY.")
+    st.error("Falha ao conectar com o Supabase. Verifique a URL e a KEY nos Secrets.")
     st.stop()
 
 # ======================================================
@@ -54,36 +45,49 @@ if not supabase:
 
 def buscar_saldo():
     """Busca o saldo atual da conta Asaas"""
+    if not ASAAS_KEY:
+        st.warning("Chave do Asaas não configurada.")
+        return 0.00
+        
     url = "https://www.asaas.com/api/v3/finance/balance"
     headers = {"access_token": ASAAS_KEY}
+    
     try:
-        response = requests.get(url, headers=headers)
+        response = requests.get(url, headers=headers, timeout=10)
         if response.status_code == 200:
             return response.json().get('balance', 0.00)
+        st.error(f"Erro {response.status_code} ao buscar saldo.")
         return 0.00
-    except:
+    except Exception as e:
+        st.error(f"Erro ao conectar com Asaas: {e}")
         return 0.00
 
 @st.cache_data(ttl=60)
 def get_all_creators():
     """Busca usuários para login"""
     try:
-        data = supabase.table("creators").select("id, username, name, password_hash").execute().data
+        # Busca dados no Supabase
+        resp = supabase.table("creators").select("id, username, name, password_hash").execute()
+        # Tratamento seguro para diferentes versões da biblioteca supabase
+        data = getattr(resp, "data", None) or (resp.get("data") if isinstance(resp, dict) else None)
+        
         if not data:
             return [], [], [], []
-        usernames = [d['username'] for d in data]
-        names = [d['name'] for d in data]
-        hashed_passwords = [d['password_hash'] for d in data]
+            
+        usernames = [d.get('username') for d in data]
+        names = [d.get('name') for d in data]
+        hashed_passwords = [d.get('password_hash') for d in data]
         return usernames, names, hashed_passwords, data
-    except:
+    except Exception as e:
+        st.error(f"Erro ao buscar criadores no banco: {e}")
         return [], [], [], []
 
 def fetch_filtered_data(table_name, creator_id):
-    """Busca dados no banco (MVP: Traz tudo por enquanto)"""
+    """Busca dados no banco filtrados (MVP: Busca geral por enquanto)"""
     try:
-        # No futuro, aqui entra o .eq('creator_id', creator_id)
-        data = supabase.table(table_name).select("*").execute().data
-        return data
+        resp = supabase.table(table_name).select("*").execute()
+        data = getattr(resp, "data", None) or (resp.get("data") if isinstance(resp, dict) else None)
+        return data if data else []
     except:
         return []
 
@@ -94,21 +98,36 @@ def fetch_filtered_data(table_name, creator_id):
 usernames, names, hashed_passwords, creators_data = get_all_creators()
 
 if not usernames:
-    st.warning("Nenhum usuário 'creator' encontrado no banco de dados.")
+    st.warning("Nenhum usuário encontrado na tabela 'creators' do Supabase.")
     st.stop()
 
-authenticator = stauth.Authenticate(names, usernames, hashed_passwords, 'cookie_vibbox', 'chave_assinatura', cookie_expiry_days=30)
+# Configuração do Autenticador
+authenticator = stauth.Authenticate(
+    names, 
+    usernames, 
+    hashed_passwords, 
+    'cookie_vibbox', 
+    'chave_assinatura_secreta', 
+    cookie_expiry_days=30
+)
 
+# Tela de Login
 name, authentication_status, username = authenticator.login('Acesso Restrito', 'main')
 
+# Lógica Pós-Login
 if authentication_status:
-    # Login Sucesso
-    creator_id = [d['id'] for d in creators_data if d['username'] == username][0]
+    # Recupera o ID do criador logado
+    matching_creator = [d for d in creators_data if d.get('username') == username]
+    if matching_creator:
+        creator_id = matching_creator[0].get('id')
+    else:
+        st.error("Erro ao identificar ID do usuário.")
+        st.stop()
     
     st.sidebar.success(f"Olá, {name}!")
     authenticator.logout('Sair', 'sidebar')
     
-    aba = st.sidebar.radio("Menu", ["Dashboard", "Produtos", "Financeiro"])
+    aba = st.sidebar.radio("Menu Principal", ["Dashboard", "Produtos", "Financeiro"])
     st.sidebar.divider()
 
     # --- ABA DASHBOARD ---
@@ -121,6 +140,8 @@ if authentication_status:
         
         if dados_leads:
             df = pd.DataFrame(dados_leads)
+            
+            # Verificações de segurança para colunas
             total = len(df)
             vips = len(df[df['status'] == 'cliente_vip']) if 'status' in df.columns else 0
             faturamento = vips * 10.00 
@@ -131,14 +152,17 @@ if authentication_status:
             c3.metric("Faturamento (Est.)", f"R$ {faturamento:.2f}")
             
             st.divider()
-            st.dataframe(df, use_container_width=True)
+            
+            # Mostra apenas colunas que existem
+            cols_to_show = [c for c in ['nome', 'status', 'telegram_id', 'created_at'] if c in df.columns]
+            st.dataframe(df[cols_to_show], use_container_width=True)
         else:
             st.info("Ainda não há dados de clientes.")
 
     # --- ABA PRODUTOS ---
     elif aba == "Produtos":
         st.title("📦 Meus Produtos")
-        st.info("Aqui ficará a gestão de produtos dinâmica.")
+        st.info("Aqui você poderá adicionar e editar seus produtos em breve.")
 
     # --- ABA FINANCEIRO ---
     elif aba == "Financeiro":
@@ -150,7 +174,7 @@ if authentication_status:
         st.subheader("Configurar Conta de Saque")
         
         with st.form("form_banco"):
-            st.caption("Preencha para onde o dinheiro deve ir.")
+            st.caption("Dados para onde o dinheiro será enviado (PIX/TED).")
             banco = st.text_input("Banco")
             agencia = st.text_input("Agência")
             conta = st.text_input("Conta")
@@ -158,8 +182,9 @@ if authentication_status:
             
             if st.form_submit_button("Salvar Dados"):
                 try:
-                    # Tenta converter o ID para número para salvar no banco
+                    # Converte o ID do CLIENTE_TEST_ID (que vem como string dos secrets) para número
                     id_numerico = int(CLIENT_TEST_ID)
+                    
                     dados = {
                         "user_telegram_id": id_numerico,
                         "banco_nome": banco,
@@ -168,16 +193,12 @@ if authentication_status:
                         "tipo_conta": tipo
                     }
                     supabase.table("contas_bancarias").upsert(dados).execute()
-                    st.success("Dados salvos!")
+                    st.success("Dados bancários salvos com sucesso!")
                 except Exception as e:
                     st.error(f"Erro ao salvar: {e}")
 
-# Tratamento de Login Falho
+# Mensagens de Erro de Login
 elif authentication_status == False:
     st.error('Usuário ou senha incorretos.')
 elif authentication_status == None:
-    st.warning('Por favor, faça login.')
-
-
-
-
+    st.warning('Por favor, faça login para acessar o sistema.')
