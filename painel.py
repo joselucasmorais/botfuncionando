@@ -3,6 +3,7 @@ import pandas as pd
 import requests
 import streamlit_authenticator as stauth
 from supabase import create_client
+supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 # ======================================================
 # 🔐 CONFIGURAÇÃO DE CHAVES E ACESSO
@@ -158,6 +159,10 @@ elif authentication_status == False:
     st.error('Nome de utilizador/palavra-passe incorretos')
 elif authentication_status is None:
     st.warning('Por favor, insira o seu nome de utilizador e palavra-passe para aceder ao Painel.')
+    if supabase is None:
+    st.error("Erro: conexão com Supabase não inicializada.")
+
+
 
 
 
