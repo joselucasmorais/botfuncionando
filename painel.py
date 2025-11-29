@@ -21,7 +21,9 @@ SUPABASE_URL = st.secrets["SUPABASE_URL"] "https://fygapkucfwgdynbiyfcz.supabase
 SUPABASE_KEY = st.secrets["SUPABASE_KEY"] "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ5Z2Fwa3VjZndnZHluYml5ZmN6Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2NDMwNTI0NywiZXhwIjoyMDc5ODgxMjQ3fQ.V_IpDzhosRCecUENzdAB3bzQrfg2BfjU-op_SyXLvqk"
 ASAAS_KEY = st.secrets["ASAAS_KEY"] "$aact_prod_000MzkwODA2MWY2OGM3MWRlMDU2NWM3MzJlNzZmNGZhZGY6OjQ5NDI5MGU3LTU1NzktNGI3NS04MThkLWMzMjA0YTIxOGZmYzo6JGFhY2hfMWEyMjU1MmYtNjZkZS00NGM3LTkzNWUtYTMzMjAzZWM0NTI5"
 CPF_CLIENTE = st.secrets["CPF_CLIENTE"] "141.214.394.22"
-CLIENT_TEST_ID = st.secrets["CLIENT_TEST_ID"] "CLIENT_TEST_ID" 
+CLIENT_TEST_ID = st.secrets["CLIENT_TEST_ID"] "1470609053"
+                                            ^
+SyntaxError: invalid syntax" 
 # ======================================================
 
 # ... (O resto do código deve estar igual) ...
@@ -220,5 +222,6 @@ elif authentication_status == False:
     st.error('Nome de utilizador/palavra-passe incorretos')
 elif authentication_status is None:
     st.warning('Por favor, insira o seu nome de utilizador e palavra-passe para aceder ao Painel.')
+
 
 
