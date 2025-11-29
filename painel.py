@@ -5,15 +5,16 @@ import streamlit_authenticator as stauth
 from supabase import create_client
 
 # ======================================================
-# 1. CONFIGURAÇÃO DA PÁGINA (OBRIGATÓRIO SER A PRIMEIRA LINHA DO STREAMLIT)
+# 1. CONFIGURAÇÃO DA PÁGINA (OBRIGATÓRIO SER A PRIMEIRA LINHA)
 # ======================================================
 st.set_page_config(page_title="Painel Admin", page_icon="🚀", layout="wide")
 
 # ======================================================
 # 2. RECUPERAÇÃO DE SEGREDOS (CÓDIGO LIMPO)
 # ======================================================
-# O código abaixo busca os valores guardados no cofre do Streamlit.
 try:
+    # O Python vai buscar os valores na caixa "Secrets" do Streamlit Cloud.
+    # Não coloque os links ou chaves aqui, apenas os nomes entre colchetes.
     SUPABASE_URL = st.secrets["SUPABASE_URL"]
     SUPABASE_KEY = st.secrets["SUPABASE_KEY"]
     ASAAS_KEY = st.secrets["ASAAS_KEY"]
@@ -68,7 +69,7 @@ def get_all_creators():
     try:
         # Busca dados no Supabase
         resp = supabase.table("creators").select("id, username, name, password_hash").execute()
-        # Tratamento seguro para diferentes versões da biblioteca supabase
+        # Tratamento seguro para diferentes versões da biblioteca
         data = getattr(resp, "data", None) or (resp.get("data") if isinstance(resp, dict) else None)
         
         if not data:
@@ -83,7 +84,7 @@ def get_all_creators():
         return [], [], [], []
 
 def fetch_filtered_data(table_name, creator_id):
-    """Busca dados no banco filtrados (MVP: Busca geral por enquanto)"""
+    """Busca dados no banco filtrados"""
     try:
         resp = supabase.table(table_name).select("*").execute()
         data = getattr(resp, "data", None) or (resp.get("data") if isinstance(resp, dict) else None)
@@ -118,6 +119,7 @@ name, authentication_status, username = authenticator.login('Acesso Restrito', '
 if authentication_status:
     # Recupera o ID do criador logado
     matching_creator = [d for d in creators_data if d.get('username') == username]
+    
     if matching_creator:
         creator_id = matching_creator[0].get('id')
     else:
@@ -183,7 +185,7 @@ if authentication_status:
             if st.form_submit_button("Salvar Dados"):
                 try:
                     # Converte o ID do CLIENTE_TEST_ID (que vem como string dos secrets) para número
-                    id_numerico = int(CLIENT_TEST_ID)
+                    id_numerico = int(str(CLIENT_TEST_ID))
                     
                     dados = {
                         "user_telegram_id": id_numerico,
