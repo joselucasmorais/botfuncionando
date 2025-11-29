@@ -13,12 +13,21 @@ st.set_page_config(page_title="Painel Admin", page_icon="🚀", layout="wide")
 # 2. RECUPERAÇÃO DE SEGREDOS (DO STREAMLIT CLOUD)
 # ======================================================
 try:
-    SUPABASE_URL = st.secrets["SUPABASE_URL"]= "https://seu-projeto.supabase.co"
-    SUPABASE_KEY = st.secrets["SUPABASE_KEY"]= "1470609053" 
-    ASAAS_KEY = st.secrets["ASAAS_KEY"]= "$aact_prod_000MzkwODA2MWY2OGM3MWRlMDU2NWM3MzJlNzZmNGZhZGY6OjQ5NDI5MGU3LTU1NzktNGI3NS04MThkLWMzMjA0YTIxOGZmYzo6JGFhY2hfMWEyMjU1MmYtNjZkZS00NGM3LTkzNWUtYTMzMjAzZWM0NTI5"
-    CPF_CLIENTE = st.secrets["CPF_CLIENTE"]= "141.214.394.22"
-    # Converte o ID para string para evitar erros de tipo
+    # ======================================================
+# 2. RECUPERAÇÃO DE SEGREDOS (CÓDIGO LIMPO)
+# ======================================================
+# ATENÇÃO: Não coloque "=" nem o valor real aqui!
+# Apenas o nome da chave entre colchetes e aspas.
+
+try:
+    SUPABASE_URL = st.secrets["SUPABASE_URL"]
+    SUPABASE_KEY = st.secrets["SUPABASE_KEY"]
+    ASAAS_KEY = st.secrets["ASAAS_KEY"]
+    CPF_CLIENTE = st.secrets["CPF_CLIENTE"]
     CLIENT_TEST_ID = st.secrets["CLIENT_TEST_ID"]
+except Exception as e:
+    st.error(f"Erro: Faltam chaves nos Secrets do site. Detalhe: {e}")
+    st.stop()
 except Exception as e:
     st.error(f"Erro Crítico: Faltam chaves nos 'Secrets' do Streamlit Cloud. Detalhe: {e}")
     st.stop()
@@ -168,6 +177,7 @@ elif authentication_status == False:
     st.error('Usuário ou senha incorretos.')
 elif authentication_status == None:
     st.warning('Por favor, faça login.')
+
 
 
 
