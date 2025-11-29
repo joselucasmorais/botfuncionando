@@ -159,8 +159,12 @@ elif authentication_status == False:
     st.error('Nome de utilizador/palavra-passe incorretos')
 elif authentication_status is None:
     st.warning('Por favor, insira o seu nome de utilizador e palavra-passe para aceder ao Painel.')
-    if supabase is None:
+   # Verifica se a conexão com Supabase foi inicializada
+if supabase is None:
     st.error("Erro: conexão com Supabase não inicializada.")
+    st.stop()
+
+
 
 
 
