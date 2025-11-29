@@ -1,50 +1,75 @@
+import os
 import streamlit as st
 import pandas as pd
 import requests
 import streamlit_authenticator as stauth
 from supabase import create_client
-supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 # ======================================================
-# 🔐 CONFIGURAÇÃO DE CHAVES E ACESSO
+# CONFIGURAÇÃO DE CHAVES E ACESSO (usar Streamlit Secrets ou variáveis de ambiente)
 # ======================================================
-import streamlit as st
+# No Streamlit Cloud: Settings → Secrets
+# Exemplo de keys no Secrets:
+# SUPABASE_URL = "https://<seu-projeto>.supabase.co"
+# SUPABASE_KEY = "eyJ..."
+# ASAAS_KEY = "seu_asaas_key_aqui"
 
-SUPABASE_URL = st.secrets["https://fygapkucfwgdynbiyfcz.supabase.co"]
-SUPABASE_KEY = st.secrets["eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ5Z2Fwa3VjZndnZHluYml5ZmN6Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2NDMwNTI0NywiZXhwIjoyMDc5ODgxMjQ3fQ.V_IpDzhosRCecUENzdAB3bzQrfg2BfjU-op_SyXLvqk"]
+SUPABASE_URL = st.secrets.get("https://fygapkucfwgdynbiyfcz.supabase.co/") 
+SUPABASE_KEY = st.secrets.get("eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ5Z2Fwa3VjZndnZHluYml5ZmN6Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2NDMwNTI0NywiZXhwIjoyMDc5ODgxMjQ3fQ.V_IpDzhosRCecUENzdAB3bzQrfg2BfjU-op_SyXLvqk") or os.environ.get("SUPABASE_KEY")
+ASAAS_KEY = st.secrets.get("$aact_prod_000MzkwODA2MWY2OGM3MWRlMDU2NWM3MzJlNzZmNGZhZGY6OjQ5NDI5MGU3LTU1NzktNGI3NS04MThkLWMzMjA0YTIxOGZmYzo6JGFhY2hfMWEyMjU1MmYtNjZkZS00NGM3LTkzNWUtYTMzMjAzZWM0NTI5") 
+CLIENT_TEST_ID = st.secrets.get("CLIENT_TEST_ID") or os.environ.get("CLIENT_TEST_ID") or 6519700996
 
-ASAAS_KEY = "$aact_prod_000MzkwODA2MWY2OGM3MWRlMDU2NWM3MzJlNzZmNGZhZGY6OjQ5NDI5MGU3LTU1NzktNGI3NS04MThkLWMzMjA0YTIxOGZmYzo6JGFhY2hfMWEyMjU1MmYtNjZkZS00NGM3LTkzNWUtYTMzMjAzZWM0NTI5"
-# --- VARIÁVEL DE TESTE 
-CLIENT_TEST_ID = 6519700996
-# ======================================================
+# Validação imediata das credenciais
+if not SUPABASE_URL or not SUPABASE_KEY:
+    st.error("SUPABASE_URL ou SUPABASE_KEY não configurados. Configure em Streamlit Secrets ou variáveis de ambiente.")
+    st.stop()
 
 # Configuração da Página (LAYOUT TEM QUE SER A PRIMEIRA COISA)
 st.set_page_config(page_title="Painel de Clientes", page_icon="🔒", layout="wide")
 
 # --- CONEXÃO GERAL ---
 @st.cache_resource
-def init_connection():
+def init_connection(url: str, key: str):
     try:
-        return create_client(SUPABASE_URL, SUPABASE_KEY)
+        client = create_client(url, key)
+        return client
     except Exception as e:
-        st.error(f"Erro Supabase: {e}")
+        st.error(f"Erro ao inicializar Supabase: {e}")
         return None
 
-supabase = init_connection()
+supabase = init_connection(SUPABASE_URL, SUPABASE_KEY)
+
+# Verifica se a conexão com Supabase foi inicializada
+if supabase is None:
+    st.error("Erro: conexão com Supabase não inicializada.")
+    st.stop()
 
 # =======================
 # Funções auxiliares
 # =======================
-# Implemente ou importe as funções a seguir no módulo
-# def get_all_creators(): ...
-# def fetch_filtered_data(table, creator_id): ...
+def fetch_filtered_data(table: str, creator_id):
+    """Busca dados filtrados por creator_id. Retorna lista (ou [])"""
+    try:
+        resp = supabase.table(table).select("*").eq("creator_id", creator_id).execute()
+        # Dependendo da versão do client, o resultado pode estar em resp.data ou resp.get('data')
+        data = getattr(resp, "data", None) or (resp.get("data") if isinstance(resp, dict) else None)
+        if data is None:
+            return []
+        return data
+    except Exception as e:
+        st.error(f"Erro ao buscar dados da tabela {table}: {e}")
+        return []
 
 def buscar_saldo():
     """Busca o saldo atual da conta Asaas da cliente"""
+    if not ASAAS_KEY:
+        st.warning("ASAAS_KEY não configurada. Saldo indisponível.")
+        return 0.00
+
     url = "https://www.asaas.com/api/v3/finance/balance"
     headers = {"access_token": ASAAS_KEY}
     try:
-        response = requests.get(url, headers=headers)
+        response = requests.get(url, headers=headers, timeout=10)
         if response.status_code == 200:
             return response.json().get('balance', 0.00)
         st.error(f"Erro {response.status_code} ao buscar saldo.")
@@ -59,31 +84,48 @@ def buscar_saldo():
 # ======================================================
 # 1. AUTENTICAÇÃO E INÍCIO DO FLUXO
 # ======================================================
-# --- FUNÇÕES DE LÓGICA DE NEGÓCIO ---
-
 @st.cache_data(ttl=60)
 def get_all_creators():
     """Busca utilizadores (criadores) do banco para autenticação"""
     try:
-        data = supabase.table("creators").select("id, username, name, password_hash").execute().data
-        usernames = [d['username'] for d in data]
-        names = [d['name'] for d in data]
-        hashed_passwords = [d['password_hash'] for d in data]
+        resp = supabase.table("creators").select("id, username, name, password_hash").execute()
+        data = getattr(resp, "data", None) or (resp.get("data") if isinstance(resp, dict) else None)
+        if not data:
+            return [], [], [], []
+        usernames = [d.get('username') for d in data]
+        names = [d.get('name') for d in data]
+        hashed_passwords = [d.get('password_hash') for d in data]
         return usernames, names, hashed_passwords, data
     except Exception as e:
         st.error(f"Erro ao buscar criadores: {e}")
         return [], [], [], []
+
 usernames, names, hashed_passwords, creators_data = get_all_creators()
-# O hash usado deve ser bcrypt
-authenticator = stauth.Authenticate(names, usernames, hashed_passwords, 'autenticador', 'abcdef', cookie_expiry_days=30)
+
+# Se não houver criadores cadastrados, interrompe com mensagem clara
+if not creators_data:
+    st.warning("Nenhum criador encontrado no banco. Verifique a tabela 'creators' no Supabase.")
+    st.stop()
+
+# O stauth aceita listas, mas precisamos garantir que não estão vazias
+try:
+    authenticator = stauth.Authenticate(names, usernames, hashed_passwords, 'autenticador', 'abcdef', cookie_expiry_days=30)
+except Exception as e:
+    st.error(f"Erro ao inicializar o autenticador: {e}")
+    st.stop()
 
 # Tenta fazer login
 name, authentication_status, username = authenticator.login('Login do Cliente', 'main')
 
 # 2. SE A AUTENTICAÇÃO FOR BEM SUCEDIDA: MOSTRA O DASHBOARD
 if authentication_status:
-    creator_id = [d['id'] for d in creators_data if d['username'] == username][0]
-    
+    # Proteção contra IndexError: busca segura do creator_id
+    matching = [d for d in creators_data if d.get('username') == username]
+    if not matching:
+        st.error("Usuário autenticado não encontrado na lista de criadores.")
+        st.stop()
+    creator_id = matching[0].get('id')
+
     st.sidebar.success(f"Logado como: {name}")
     authenticator.logout('Sair', 'sidebar')
 
@@ -96,12 +138,16 @@ if authentication_status:
 
         # Busca dados, agora filtrados
         df_usuarios_data = fetch_filtered_data("usuarios", creator_id)
-        
+
         if df_usuarios_data:
             df = pd.DataFrame(df_usuarios_data)
-            vips = len(df[df['status'] == 'cliente_vip'])
-            faturamento = vips * 10.00 # Estimativa
-            
+            # Proteções caso colunas não existam
+            if 'status' in df.columns:
+                vips = len(df[df['status'] == 'cliente_vip'])
+            else:
+                vips = 0
+            faturamento = vips * 10.00  # Estimativa
+
             col1, col2, col3 = st.columns(3)
             col1.metric("Clientes VIP", vips)
             col2.metric("Faturamento Estimado", f"R$ {faturamento:.2f}")
@@ -109,7 +155,9 @@ if authentication_status:
 
             st.divider()
             st.subheader("📋 Clientes Registrados")
-            st.dataframe(df[['nome', 'status', 'telegram_id', 'created_at']], use_container_width=True)
+            # Proteção para colunas exibidas
+            display_cols = [c for c in ['nome', 'status', 'telegram_id', 'created_at'] if c in df.columns]
+            st.dataframe(df[display_cols], use_container_width=True)
         else:
             st.info("Nenhum dado encontrado para este criador.")
 
@@ -129,7 +177,10 @@ if authentication_status:
 
         with st.form("form_cadastro_bancario"):
             st.caption("Você só precisa preencher isso uma vez.")
-            CLIENT_ID_NUMERICO = int(CLIENT_TEST_ID)
+            try:
+                CLIENT_ID_NUMERICO = int(CLIENT_TEST_ID)
+            except Exception:
+                CLIENT_ID_NUMERICO = CLIENT_TEST_ID
 
             col_banco, col_ag = st.columns(2)
             banco_nome = col_banco.text_input("Banco (Nome ou Código)")
@@ -148,8 +199,11 @@ if authentication_status:
                     "conta": conta,
                     "tipo_conta": tipo_conta
                 }
-                supabase.table("contas_bancarias").upsert(dados_banco).execute()
-                st.success("✅ Dados bancários atualizados!")
+                try:
+                    supabase.table("contas_bancarias").upsert(dados_banco).execute()
+                    st.success("✅ Dados bancários atualizados!")
+                except Exception as e:
+                    st.error(f"Erro ao salvar dados bancários: {e}")
 
         st.divider()
         st.info("Para sacar, preencha o formulário acima e clique em 'Realizar Saque'.")
@@ -159,21 +213,3 @@ elif authentication_status == False:
     st.error('Nome de utilizador/palavra-passe incorretos')
 elif authentication_status is None:
     st.warning('Por favor, insira o seu nome de utilizador e palavra-passe para aceder ao Painel.')
-   # Verifica se a conexão com Supabase foi inicializada
-if supabase is None:
-    st.error("Erro: conexão com Supabase não inicializada.")
-    st.stop()
-
-
-
-
-
-
-
-
-
-
-
-
-
-
