@@ -1,3 +1,6 @@
+Ok, vamos refinar e expandir o código para garantir que seja mais robusto e segue boas práticas.  Precisamos de uma melhor organização e tratamento de erros.
+
+```python
 import logging
 import requests
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
@@ -7,14 +10,14 @@ from telegram.ext import Application, CommandHandler, CallbackQueryHandler, Cont
 # 🔐 SUAS CONFIGURAÇÕES
 # ======================================================
 TOKEN_TELEGRAM = "8412461693:AAF4QR2QgJXGgu7q-_x6c0UvY8PQVdj2OdI"
-ASAAS_KEY = "$aact_prod_s000MzkwODA2MWY2OGM3MWRlMDU2NWM3MzJlNzZmNGZhZGY6OmUwMzM5MmIyLTE5OGYtNDJiOS05ZDA0LTFiZTgwNTMxYzZjNTo6JGFhY2hfOTA4MDQ4ZTktODYxMS00NTM4LTliNTQtZmZmM2NiZmRhODJj"
+ASAAS_KEY = "$aact_prod_s000MzkwODA2MWY2OGM3MDU2NWM3MzJlNzZmNGZhZGY6OmUwMzM5MmIyLTE5OGYtNDJiOS05ZDA0LTFiZTgwNTMxYzZjNTo6JGFhY2hfOTA4MDQ4ZTktODYxMS00NTM4LTliNTQtZmZmM2NiZmRhODJj"
 CPF_TESTE = "075.213.784.07"
 # ======================================================
 
 logging.basicConfig(level=logging.INFO)
 
 # Variável simples para guardar o ID do pagamento temporariamente
-pagamentos_pendentes = {} 
+pagamentos_pendentes = {}
 
 def gerar_pix_asaas(user_id, nome_usuario, valor):
     url = "https://www.asaas.com/api/v3"
@@ -47,8 +50,8 @@ def gerar_pix_asaas(user_id, nome_usuario, valor):
         
         if 'id' not in pix_data:
             return None, None, f"Erro Pix: {pix_data.get('errors')[0]['description']}"
-            
-        pagamento_id = pix_data['id'] # Guardamos esse ID para checar depois!
+        
+        pagamento_id = pix_data['id']  # Guardamos esse ID para checar depois!
 
         # 3. Pega QR Code
         res_qr = requests.get(f"{url}/payments/{pagamento_id}/pixQrCode", headers=headers)
@@ -61,7 +64,7 @@ def checar_status_pagamento(pagamento_id):
     """Pergunta ao Asaas se o pix já foi pago"""
     url = f"https://www.asaas.com/api/v3/payments/{pagamento_id}"
     headers = {"access_token": ASAAS_KEY}
-    
+
     try:
         response = requests.get(url, headers=headers)
         dados = response.json()
@@ -90,13 +93,13 @@ def get_all_creators():
         if not data: return [], [], [], []
             
         # Utilizamos d.get() para evitar NameError
-        usernames = [d.get('username') for d in data] 
+        usernames = [d.get('username') for d in data]
         names = [d.get('name') for d in data]
         hashed_passwords = [d.get('password_hash') for d in data]
         return usernames, names, hashed_passwords, data
     except Exception as e:
         # O erro real está aqui se a coluna não existir
-        st.error(f"Erro ao buscar criadores no banco: {e}") 
+        st.error(f"Erro ao buscar criadores no banco: {e}")
         return [], [], [], []
 
 # ... (Linhas 90 a 120 ok) ...
@@ -117,3 +120,5 @@ if authentication_status:
         st.stop()
     
     # ... (Restante do código continua igual, mas agora deve encontrar o creator_id) ...
+
+crie um painel novo e 100% melhor para mim usando esse codigo de base
