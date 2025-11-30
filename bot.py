@@ -77,50 +77,43 @@ async def inicio(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def botoes(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
-    user_id = query.from_user.id
+    # ... (Linhas anteriores ok) ...
 
-    if query.data == 'comprar_vip':
-        await query.edit_message_text("⏳ Criando PIX...")
+@st.cache_data(ttl=60)
+def get_all_creators():
+    """Busca usuários para login (Corrigido para usar username)"""
+    try:
+        # CORREÇÃO AQUI: Buscamos as colunas que devem existir no seu banco.
+        resp = supabase.table("creators").select("id, username, name, password_hash").execute() 
+        data = getattr(resp, "data", [])
         
-        # Gera o Pix
-        dados_qr, pag_id, erro = gerar_pix_asaas(user_id, query.from_user.first_name, 5.00)
-        
-        if erro:
-            await query.edit_message_text(f"❌ Erro: {erro}")
-        else:
-            # Salva o ID do pagamento para checar depois
-            pagamentos_pendentes[user_id] = pag_id
+        if not data: return [], [], [], []
             
-            copia_e_cola = dados_qr['payload']
-            msg = "✅ **PIX GERADO!**\nCopie o código abaixo e pague no seu banco:"
-            await query.message.reply_text(msg, parse_mode='Markdown')
-            await query.message.reply_text(f"`{copia_e_cola}`", parse_mode='Markdown')
-            
-            # CRIA O BOTÃO DE CHECAR PAGAMENTO
-            botao_checar = [[InlineKeyboardButton("✅ JÁ PAGUEI (LIBERAR ACESSO)", callback_data='checar_pagamento')]]
-            await query.message.reply_text("Depois de pagar, clique abaixo:", reply_markup=InlineKeyboardMarkup(botao_checar))
+        # Utilizamos d.get() para evitar NameError
+        usernames = [d.get('username') for d in data] 
+        names = [d.get('name') for d in data]
+        hashed_passwords = [d.get('password_hash') for d in data]
+        return usernames, names, hashed_passwords, data
+    except Exception as e:
+        # O erro real está aqui se a coluna não existir
+        st.error(f"Erro ao buscar criadores no banco: {e}") 
+        return [], [], [], []
 
-    elif query.data == 'checar_pagamento':
-        # Pega o ID do pagamento que salvamos
-        pag_id = pagamentos_pendentes.get(user_id)
-        
-        if not pag_id:
-            await query.message.reply_text("Não achei nenhum pagamento pendente pra você.")
-            return
+# ... (Linhas 90 a 120 ok) ...
 
-        status = checar_status_pagamento(pag_id)
-        
-        if status == 'RECEIVED' or status == 'CONFIRMED':
-            await query.edit_message_text("🎉 **PAGAMENTO CONFIRMADO!**\n\nVocê agora é VIP! 💎\n(Aqui você entregaria o link do grupo ou o produto)")
-        else:
-            await query.message.reply_text(f"🔍 O Banco disse que ainda está: **{status}**.\nSe já pagou, espere 30 segundos e tente de novo!")
+# Tenta fazer login
+name, authentication_status, username = authenticator.login('Acesso Restrito', 'main')
 
-def main():
-    print("🤖 BOT PRONTO COM VERIFICAÇÃO!")
-    app = Application.builder().token(TOKEN_TELEGRAM).build()
-    app.add_handler(CommandHandler("start", inicio))
-    app.add_handler(CallbackQueryHandler(botoes))
-    app.run_polling()
-
-if __name__ == "__main__":
-    main()
+# 2. SE A AUTENTICAÇÃO FOR BEM SUCEDIDA: MOSTRA O DASHBOARD
+if authentication_status:
+    # FILTRO: Busca o ID do criador que acabou de logar
+    # Note: Aqui o código usa 'username'
+    matching_creator = [d for d in creators_data if d.get('username') == username]
+    
+    if matching_creator:
+        creator_id = matching_creator[0].get('id')
+    else:
+        st.error("Erro ao identificar ID do usuário.")
+        st.stop()
+    
+    # ... (Restante do código continua igual, mas agora deve encontrar o creator_id) ...
